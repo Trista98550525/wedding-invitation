@@ -641,7 +641,7 @@ function onBgImageLoad() {
 
 function onPageScroll() {
   const scrollY = window.scrollY || window.pageYOffset;
-  if (scrollY > 150 && !isCardHiding) {
+  if (scrollY > 80 && !isCardHiding) {
     isCardVisible = true;
     $contentCard.style.display = '';
   }
