@@ -188,6 +188,7 @@ body {
   box-shadow: 0 -20px 60px rgba(90,120,90,0.25), 0 8px 32px rgba(0,0,0,0.15);
   max-width: min(420px, 92vw);
   margin: 0 auto;
+  display: none
   animation: cardAppear 1s ease forwards;
 }
 
@@ -640,7 +641,7 @@ function onBgImageLoad() {
 
 function onPageScroll() {
   const scrollY = window.scrollY || window.pageYOffset;
-  if (scrollY > 75 && !isCardHiding) {
+  if (scrollY > 150 && !isCardHiding) {
     isCardVisible = true;
     $contentCard.style.display = '';
   }
