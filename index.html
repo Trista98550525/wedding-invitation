@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>楼丹宁 ❤️ 陈抒钊 · 婚礼邀请</title>
+<style>
+:root {
+  --sage: #7a9e7e;
+  --sage-light: #a8c5ab;
+  --sage-dark: #5a7a5e;
+  --lavender: #9b8fb8;
+  --lavender-light: #c4b8d9;
+  --lavender-dark: #7a6a98;
+  --rose: #c48b9f;
+  --rose-light: #e8b8c4;
+  --text: #4a4a4a;
+  --text-light: #7a7a7a;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
+  background: #faf8f5;
+  overflow-x: hidden;
+  -webkit-overflow-smoothing: antialiased;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+/* 花瓣画布 */
+.petal-canvas {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* 开场叠加层 */
+.opening-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 90;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(145deg, #f0e8f8 0%, #e8ddf5 30%, #dfd4ef 60%, #ece4f5 100%);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 叠加层装饰图案 - 淡紫色圆点 */
+.opening-overlay::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-image:
+    radial-gradient(circle at 15% 20%, rgba(180, 150, 210, 0.15) 0%, transparent 40%),
+    radial-gradient(circle at 85% 80%, rgba(200, 170, 220, 0.12) 0%, transparent 35%),
+    radial-gradient(circle at 75% 15%, rgba(160, 130, 190, 0.1) 0%, transparent 30%),
+    radial-gradient(circle at 25% 85%, rgba(185, 155, 205, 0.12) 0%, transparent 38%);
+  pointer-events: none;
+}
+
+.opening-overlay.animate-in {
+  animation: overlayFadeIn 1.2s ease forwards;
+}
+
+@keyframes overlayFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.opening-text-group {
+  text-align: center;
+  animation: fadeInUp 2s ease 0.5s forwards;
+  opacity: 0;
+  margin-bottom: 24px;
+}
+
+.opening-name {
+  width: min(250px, 75vw);
+  margin-bottom: 16px;
+  opacity: 0.85;
+}
+
+.opening-date-line {
+  width: 40px;
+  height: 1px;
+  background: rgba(155,143,184,0.4);
+  margin: 0 auto 20px;
+}
+
+.opening-date-cn {
+  display: block;
+  font-size: 11px;
+  letter-spacing: 3.5px;
+  color: rgba(130, 100, 160, 0.85);
+  margin-bottom: 16px;
+}
+
+.opening-handwriting {
+  width: min(180px, 55vw);
+  margin-bottom: 16px;
+  opacity: 0.85;
+}
+
+.opening-elements {
+  width: min(250px, 75vw);
+  margin-bottom: 24px;
+  opacity: 0.9;
+}
+
+.opening-hint {
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: rgba(130, 100, 160, 0.8);
+  animation: fadeInUp 1.6s ease 1.8s forwards, hintPulse 3s ease-in-out 3.5s infinite;
+  opacity: 0;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes hintPulse {
+  0%, 100% { opacity: 0.4; }
+  50%      { opacity: 0.85; }
+}
+
+/* 插画背景 */
+.illustration-bg {
+  display: block;
+  width: 100%;
+  max-width: 100vw;
+  opacity: 0;
+  filter: blur(6px) brightness(0.9);
+  transition: opacity 2.8s ease, filter 2.8s ease;
+  pointer-events: none;
+}
+
+.illustration-bg.revealed {
+  opacity: 1;
+  filter: blur(0) brightness(1);
+}
+
+/* 图片加载中占位背景 */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(145deg, #f0e8f8 0%, #e4d8f0 50%, #ece4f5 100%);
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* 主滚动容器 - 揭晓后恢复文档流 */
+.main-container {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 10;
+  overflow-y: auto;
+}
+
+.main-container.scrolling {
+  position: relative;
+  top: auto; left: auto; right: auto; bottom: auto;
+}
+
+/* 卡片包装器 - 相对背景图定位 */
+.card-wrapper {
+  position: relative;
+  min-height: 100vh;
+}
+
+/* 文字卡片 - 固定在容器底部 */
+.content-card {
+  position: absolute;
+  bottom: 230px;
+  left: 0; right: 0;
+  background: rgba(255,255,255,0.45);
+  border-radius: 20px;
+  padding: 32px 6vw;
+  box-shadow: 0 -20px 60px rgba(90,120,90,0.25), 0 8px 32px rgba(0,0,0,0.15);
+  max-width: min(340px, 88vw);
+  margin: 0 auto;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(40px);
+  transition: opacity 0.8s ease, transform 0.8s ease, visibility 0.3s ease;
+}
+
+.content-card.visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+/* 返回按钮 */
+.back-to-top-wrap {
+  position: fixed;
+  bottom: max(20px, env(safe-area-inset-bottom, 20px));
+  left: 50%;
+  transform: translateX(-50%) translateY(15px);
+  z-index: 50;
+  opacity: 0;
+  transition: opacity 0.8s ease, transform 0.8s ease;
+  pointer-events: none;
+}
+
+.back-to-top-wrap.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+  pointer-events: auto;
+}
+
+.back-to-top-text {
+  display: inline-block;
+  font-size: 13px;
+  color: var(--lavender-dark);
+  padding: 9px 24px;
+  letter-spacing: 2px;
+  background: rgba(255,255,255,0.75);
+  border-radius: 20px;
+  border: 1px solid rgba(155,143,184,0.4);
+  backdrop-filter: blur(3px);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 邀请语 */
+.invitation-text { text-align: center; padding: 0 0 6px; }
+
+.salutation {
+  display: block;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--lavender);
+  margin-top: -4px;
+  margin-bottom: 6px;
+}
+
+.invite-copy {
+  display: block;
+  font-size: clamp(15px, 4.5vw, 16px);
+  line-height: 1.9;
+  color: var(--text);
+  white-space: pre-line;
+}
+
+/* 分隔装饰 */
+.section-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: 10px 0;
+}
+
+.div-line {
+  flex: 1;
+  max-width: 60px;
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--sage-light), transparent);
+}
+
+.div-ornament { font-size: 16px; opacity: 0.6; }
+
+/* 日期时间 */
+.datetime-block {
+  text-align: center;
+  padding: 10px 12px;
+  margin: 4px 0 6px;
+  border-top: 1px dashed rgba(122,158,126,0.3);
+  border-bottom: 1px dashed rgba(122,158,126,0.3);
+}
+
+.date-main {
+  display: block;
+  font-size: clamp(22px, 6.5vw, 26px);
+  color: var(--sage-dark);
+  font-weight: 400;
+  letter-spacing: 4px;
+  margin-bottom: 2px;
+}
+
+.date-detail {
+  display: block;
+  font-size: clamp(13px, 3.5vw, 14px);
+  color: var(--text-light);
+  letter-spacing: 2px;
+  margin-bottom: 4px;
+}
+
+.time-highlight {
+  display: inline-block;
+  padding: 6px 18px;
+  background: linear-gradient(135deg, var(--rose-light), var(--rose));
+  color: white;
+  border-radius: 20px;
+  font-size: clamp(14px, 4vw, 16px);
+  letter-spacing: 2px;
+}
+
+/* 地点 */
+.venue-block { text-align: center; padding: 8px 8px 10px; margin-bottom: 8px; }
+
+.venue-label {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: var(--lavender);
+  margin-bottom: 8px;
+}
+
+.venue-address {
+  display: block;
+  font-size: clamp(13px, 3.8vw, 14px);
+  color: var(--text-light);
+  line-height: 1.9;
+}
+
+.venue-name {
+  display: block;
+  font-size: clamp(15px, 4.5vw, 18px);
+  color: var(--sage-dark);
+  font-weight: 500;
+  margin-bottom: 4px;
+  letter-spacing: 2px;
+}
+
+.venue-subaddress {
+  display: block;
+  font-size: clamp(12px, 3.5vw, 13px);
+  color: var(--text-light);
+  line-height: 1.9;
+  margin-bottom: 12px;
+}
+
+.map-btn {
+  margin-top: 12px;
+  padding: 10px 20px;
+  font-size: 13px;
+  background: rgba(255,255,255,0.8);
+  border: 1px solid var(--lavender-light);
+  border-radius: 20px;
+  color: var(--lavender);
+  line-height: 1;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  font-family: inherit;
+}
+
+/* 倒计时 */
+.countdown-section { text-align: center; padding: 8px 8px 10px; }
+
+/* 相册链接 */
+.gallery-link-wrap { text-align: center; padding: 4px 0 8px; }
+
+.gallery-link {
+  display: inline-block;
+  font-size: 13px;
+  letter-spacing: 2px;
+  color: var(--lavender-dark);
+  text-decoration: none;
+  padding: 10px 24px;
+  background: rgba(255,255,255,0.5);
+  border: 1px solid var(--lavender-light);
+  border-radius: 24px;
+  transition: all 0.3s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.gallery-link:active {
+  background: rgba(196,184,217,0.3);
+  transform: scale(0.97);
+}
+
+.cd-title {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: var(--lavender);
+  margin-bottom: 8px;
+}
+
+.countdown {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+
+.cd-unit { text-align: center; min-width: 44px; }
+
+.cd-num {
+  display: block;
+  font-size: clamp(26px, 8vw, 32px);
+  font-weight: 300;
+  color: var(--sage-dark);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.cd-text {
+  display: block;
+  font-size: clamp(8px, 2.5vw, 9px);
+  letter-spacing: 1px;
+  color: var(--lavender);
+  margin-top: 4px;
+}
+
+.cd-sep {
+  font-size: clamp(20px, 6vw, 24px);
+  color: var(--rose-light);
+  line-height: 1;
+  padding-top: 2px;
+}
+
+/* 音乐按钮 */
+.music-btn {
+  position: fixed;
+  top: max(20px, env(safe-area-inset-top, 20px));
+  right: max(20px, env(safe-area-inset-right, 20px));
+  width: 44px;
+  height: 44px;
+  background: rgba(255,255,255,0.5);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 80;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  border: none;
+  outline: none;
+  font-family: inherit;
+}
+
+.music-icon-text { font-size: 20px; color: var(--sage-dark); }
+
+.music-bars {
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 2px;
+  height: 16px;
+}
+
+.music-bars div {
+  width: 3px;
+  background: var(--sage-dark);
+  border-radius: 2px;
+  animation: musicBar 0.8s ease-in-out infinite;
+}
+
+.music-bars div:nth-child(1) { height: 40%; animation-delay: 0s; }
+.music-bars div:nth-child(2) { height: 70%; animation-delay: 0.2s; }
+.music-bars div:nth-child(3) { height: 50%; animation-delay: 0.4s; }
+.music-bars div:nth-child(4) { height: 80%; animation-delay: 0.6s; }
+
+.music-btn.playing .music-icon-text { display: none; }
+.music-btn.playing .music-bars { display: flex; }
+
+@keyframes musicBar {
+  0%, 100% { transform: scaleY(1); }
+  50%      { transform: scaleY(0.5); }
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: max(80px, env(safe-area-inset-bottom, 80px));
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: rgba(90,122,94,0.92);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 26px;
+  font-size: 13px;
+  z-index: 999;
+  opacity: 0;
+  transition: all 0.4s ease;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.scroll-hint {
+  position: fixed;
+  bottom: max(40px, env(safe-area-inset-bottom, 40px));
+  left: 50%;
+  transform: translateX(-50%) translateY(15px);
+  z-index: 80;
+  opacity: 0;
+  transition: opacity 0.8s ease, transform 0.8s ease;
+  pointer-events: none;
+}
+
+.scroll-hint-text {
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: rgba(155,143,184,0.7);
+  padding: 8px 20px;
+  background: rgba(255,255,255,0.6);
+  border-radius: 20px;
+  border: 1px solid rgba(155,143,184,0.3);
+  backdrop-filter: blur(3px);
+  white-space: nowrap;
+}
+</style>
+</head>
+<body>
+
+<canvas class="petal-canvas" id="petalCanvas"></canvas>
+
+<!-- 持久音频播放器 iframe -->
+<iframe id="audioFrame" src="audio-player.html" style="display:none" sandbox="allow-scripts allow-same-origin"></iframe>
+
+<div class="opening-overlay animate-in" id="openingOverlay">
+  <div class="opening-text-group">
+    <img class="opening-name" src="images/name1_deep.png" alt="新人姓名">
+    <div class="opening-date-line"></div>
+    <span class="opening-date-cn">贰零贰陆 · 伍月 · 拾陆</span>
+    <img class="opening-handwriting" src="images/handwriting_purple.png" alt="手写文字">
+    <img class="opening-elements" src="images/elements_deep.png" alt="装饰元素">
+  </div>
+  <span class="opening-hint">✦ 点击揭晓 ✦</span>
+</div>
+
+<div class="scroll-hint" id="scrollHint">
+  <span class="scroll-hint-text">向下滑动 ↓</span>
+</div>
+
+<div class="main-container" id="mainContainer">
+  <div class="card-wrapper">
+    <img class="illustration-bg" id="illustrationBg" src="" alt="背景插画">
+    <div class="content-card" id="contentCard">
+      <div class="invitation-text">
+        <span class="salutation">✦ 诚挚邀请 ✦</span>
+        <span class="invite-copy">世界喧嚣，我们向内寻找
+微风，繁花，与最亲爱的人
+期待您的到来
+见证这份简单而纯粹的幸福</span>
+      </div>
+      <div class="section-divider">
+        <div class="div-line"></div>
+        <span class="div-ornament">🌸</span>
+        <div class="div-line"></div>
+      </div>
+      <div class="datetime-block">
+        <span class="date-main">2026年5月16日</span>
+        <span class="date-detail">农历四月初一 · 星期六</span>
+        <div class="time-highlight">9:28 仪式开始</div>
+      </div>
+      <div class="venue-block">
+        <span class="venue-label">✦ 婚礼场地 ✦</span>
+        <span class="venue-address">宁波市永茂东路1314号</span>
+        <span class="venue-name">宁波植物园 · 月季园</span>
+        <span class="venue-subaddress">近植物园三号门</span>
+        <button class="map-btn" id="mapBtn">📍 查看地图</button>
+      </div>
+      <div class="section-divider">
+        <div class="div-line"></div>
+        <span class="div-ornament">💐</span>
+        <div class="div-line"></div>
+      </div>
+      <div class="countdown-section">
+        <span class="cd-title">✦ 距离婚礼还有 ✦</span>
+        <div class="countdown">
+          <div class="cd-unit">
+            <span class="cd-num" id="cdDays">--</span>
+            <span class="cd-text">Days</span>
+          </div>
+          <span class="cd-sep">:</span>
+          <div class="cd-unit">
+            <span class="cd-num" id="cdHours">--</span>
+            <span class="cd-text">Hours</span>
+          </div>
+          <span class="cd-sep">:</span>
+          <div class="cd-unit">
+            <span class="cd-num" id="cdMins">--</span>
+            <span class="cd-text">Mins</span>
+          </div>
+          <span class="cd-sep">:</span>
+          <div class="cd-unit">
+            <span class="cd-num" id="cdSecs">--</span>
+            <span class="cd-text">Secs</span>
+          </div>
+        </div>
+      </div>
+      <div class="section-divider">
+        <div class="div-line"></div>
+        <span class="div-ornament">📷</span>
+        <div class="div-line"></div>
+      </div>
+      <div class="gallery-link-wrap">
+        <a class="gallery-link" href="gallery.html">✦ 我们的相册 ✦</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="back-to-top-wrap" id="backWrap">
+  <div class="back-to-top-text" id="backBtn">✦ 返回查看 ✦</div>
+</div>
+
+<button class="music-btn" id="musicBtn">
+  <div class="music-bars">
+    <div></div><div></div><div></div><div></div>
+  </div>
+  <span class="music-icon-text">♪</span>
+</button>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const VENUE_ADDRESS = '浙江省宁波市镇海区永茂东路1314号 宁波植物园·月季园（近三号门）';
+const WEDDING_DATE = new Date('2026-05-16T09:28:00+08:00');
+const BACKGROUND_URL = 'images/background_web.jpg';
+const MUSIC_URL = 'images/Mago Blanco-Until I Found You (Wedding Piano Version).mp3';
+
+let isRevealed = false;
+let isCardVisible = false;
+let isCardHiding = false;
+let isMusicPlaying = false;
+let petalRunning = false;
+
+const $overlay       = document.getElementById('openingOverlay');
+const $illustration  = document.getElementById('illustrationBg');
+const $scrollHint    = document.getElementById('scrollHint');
+const $contentCard   = document.getElementById('contentCard');
+const $mainContainer = document.getElementById('mainContainer');
+const $backWrap      = document.getElementById('backWrap');
+const $backBtn       = document.getElementById('backBtn');
+const $musicBtn      = document.getElementById('musicBtn');
+const $mapBtn        = document.getElementById('mapBtn');
+const $toast         = document.getElementById('toast');
+
+const $cdDays  = document.getElementById('cdDays');
+const $cdHours = document.getElementById('cdHours');
+const $cdMins  = document.getElementById('cdMins');
+const $cdSecs  = document.getElementById('cdSecs');
+
+const audioFrame = document.getElementById('audioFrame');
+let iframeReady = false;
+let isMusicPlaying = false;
+
+window.addEventListener('DOMContentLoaded', () => {
+  // 初始化持久音频播放器
+  audioFrame.addEventListener('load', () => { iframeReady = true; });
+  // 监听 iframe 返回的播放状态
+  window.addEventListener('message', (e) => {
+    if (!e.data || typeof e.data !== 'object') return;
+    if (e.data.type === 'ready') { iframeReady = true; }
+    if (e.data.type === 'stateUpdate') {
+      isMusicPlaying = e.data.playing;
+      if (e.data.playing) {
+        $musicBtn.classList.add('playing');
+      } else {
+        $musicBtn.classList.remove('playing');
+      }
+    }
+  });
+  // 如果上次播放过，续播
+  if (localStorage.getItem('weddingMusicPlaying') === 'true') {
+    audioFrame.contentWindow.postMessage({ type: 'init', src: MUSIC_URL, title: 'Until I Found You' }, '*');
+    setTimeout(() => {
+      audioFrame.contentWindow.postMessage({ type: 'play' }, '*');
+    }, 300);
+  }
+  // 如果从相册返回且已揭晓，直接跳过揭晓页
+  if (sessionStorage.getItem('weddingRevealed') === 'true') {
+    sessionStorage.removeItem('weddingRevealed');
+    $illustration.classList.add('revealed');
+    $overlay.style.display = 'none';
+    $mainContainer.classList.add('scrolling');
+    $scrollHint.classList.add('show');
+    isRevealed = true;
+    // 续播音乐
+    if (localStorage.getItem('weddingMusicPlaying') === 'true') {
+      playMusic();
+    }
+    window.scrollTo({ top: 0 });
+    if (!petalRunning) {
+      petalRunning = true;
+      setTimeout(() => { drawPetals(); }, 300);
+    }
+  } else {
+    // 清除 sessionStorage，确保每次访问都正常显示揭晓页
+    sessionStorage.removeItem('weddingRevealed');
+    $overlay.addEventListener('click', onReveal);
+  }
+  preloadImage(BACKGROUND_URL, () => { $illustration.src = BACKGROUND_URL; });
+  updateCountdown();
+  setInterval(updateCountdown, 1000);
+  $backBtn.addEventListener('click', backToOpening);
+  $musicBtn.addEventListener('click', toggleMusic);
+  $mapBtn.addEventListener('click', openMap);
+  window.addEventListener('scroll', onPageScroll);
+  initPetals();
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+});
+
+function preloadImage(src, onLoad) {
+  const img = new Image();
+  img.onload = () => { onLoad && onLoad(); };
+  img.onerror = () => { onLoad && onLoad(); }; // 降级：仍显示图片
+  img.src = src;
+}
+
+function onPageScroll() {
+  const scrollY = window.scrollY || window.pageYOffset;
+  
+  // 滚动提示
+  if (scrollY > 50) {
+    $scrollHint.classList.remove('show');
+  } else {
+    if (isRevealed) {
+      $scrollHint.classList.add('show');
+    }
+  }
+  
+  // 卡片显示/隐藏
+  if (isRevealed && !isCardHiding) {
+    if (scrollY > 100) {
+      if (!isCardVisible) {
+        isCardVisible = true;
+        $contentCard.classList.add('visible');
+      }
+      $backWrap.classList.add('visible');
+    } else {
+      if (isCardVisible) {
+        isCardVisible = false;
+        $contentCard.classList.remove('visible');
+        $backWrap.classList.remove('visible');
+      }
+    }
+  }
+}
+
+function onReveal() {
+  isRevealed = true;
+  $illustration.classList.add('revealed');
+  $overlay.style.display = 'none';
+  $mainContainer.classList.add('scrolling');
+  setTimeout(() => { $scrollHint.classList.add('show'); }, 1400);
+
+  // 插画背景出现时播放背景音乐
+  playMusic();
+
+  // 滚动到顶部
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  if (!petalRunning) {
+    petalRunning = true;
+    setTimeout(() => { drawPetals(); }, 300);
+  }
+}
+
+function toggleMusic() {
+  if (isMusicPlaying) { pauseMusic(); } else { playMusic(); }
+}
+
+function playMusic() {
+  if (!iframeReady) {
+    audioFrame.addEventListener('load', () => {
+      iframeReady = true;
+      audioFrame.contentWindow.postMessage({ type: 'init', src: MUSIC_URL, title: 'Until I Found You' }, '*');
+      setTimeout(() => {
+        audioFrame.contentWindow.postMessage({ type: 'play' }, '*');
+      }, 100);
+    }, { once: true });
+    return;
+  }
+  audioFrame.contentWindow.postMessage({ type: 'init', src: MUSIC_URL, title: 'Until I Found You' }, '*');
+  setTimeout(() => {
+    audioFrame.contentWindow.postMessage({ type: 'play' }, '*');
+  }, 100);
+  isMusicPlaying = true;
+  $musicBtn.classList.add('playing');
+  localStorage.setItem('weddingMusicPlaying', 'true');
+}
+
+function pauseMusic() {
+  audioFrame.contentWindow.postMessage({ type: 'pause' }, '*');
+  isMusicPlaying = false;
+  $musicBtn.classList.remove('playing');
+  localStorage.setItem('weddingMusicPlaying', 'false');
+}
+
+function openMap() {
+  // 高德地图 - 宁波植物园3号门
+  const amapUrl = 'https://uri.amap.com/search?keyword=宁波植物园3号门&addr=宁波市镇海区永茂东路1314号&src=mypage&callnative=1';
+  window.open(amapUrl, '_blank');
+}
+
+function backToOpening() {
+  isCardHiding = true;
+  isRevealed = false;
+  isCardVisible = false;
+  $contentCard.classList.remove('visible');
+  $backWrap.classList.remove('visible');
+  $illustration.classList.remove('revealed');
+  $mainContainer.classList.remove('scrolling');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  setTimeout(() => {
+    isCardHiding = false;
+    $overlay.style.display = 'flex';
+    // 重置叠加层动画
+    const textGroup = $overlay.querySelector('.opening-text-group');
+    const hint = $overlay.querySelector('.opening-hint');
+    textGroup.style.animation = 'none';
+    hint.style.animation = 'none';
+    void textGroup.offsetWidth;
+    textGroup.style.animation = '';
+    hint.style.animation = '';
+  }, 600);
+}
+
+function updateCountdown() {
+  const now = new Date();
+  const diff = WEDDING_DATE - now;
+  if (diff <= 0) {
+    $cdDays.textContent = '00';
+    $cdHours.textContent = '00';
+    $cdMins.textContent = '00';
+    $cdSecs.textContent = '00';
+    return;
+  }
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+  const mins = Math.floor((diff / (1000 * 60)) % 60);
+  const secs = Math.floor((diff / 1000) % 60);
+  $cdDays.textContent = String(days).padStart(2, '0');
+  $cdHours.textContent = String(hours).padStart(2, '0');
+  $cdMins.textContent = String(mins).padStart(2, '0');
+  $cdSecs.textContent = String(secs).padStart(2, '0');
+}
+
+let petals = [];
+let ctx = null;
+let canvasWidth = 0;
+let canvasHeight = 0;
+
+function resizeCanvas() {
+  const canvas = document.getElementById('petalCanvas');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  canvasWidth = window.innerWidth;
+  canvasHeight = window.innerHeight;
+  if (!ctx) { ctx = canvas.getContext('2d'); }
+}
+
+function initPetals() {
+  petals = [];
+  for (let i = 0; i < 30; i++) {
+    petals.push({
+      x: Math.random() * window.innerWidth,
+      y: -Math.random() * 400,
+      size: Math.random() * 6 + 9,
+      speed: Math.random() * 1.0 + 0.2,
+      wind: Math.random() * 1.4 - 0.7,
+      rot: Math.random() * Math.PI * 2,
+      rotSpeed: (Math.random() - 0.5) * 0.06,
+      alpha: 0,
+      maxAlpha: Math.random() * 0.4 + 0.3,
+      alphaSpeed: 0.003 + Math.random() * 0.005,
+      sway: Math.random() * Math.PI * 2,
+      swaySpeed: Math.random() * 0.03 + 0.016,
+      type: Math.floor(Math.random() * 2),
+      color: Math.random() > 0.5 ? 0 : 1
+    });
+  }
+}
+
+function drawPetals() {
+  if (!ctx) {
+    const canvas = document.getElementById('petalCanvas');
+    ctx = canvas.getContext('2d');
+    resizeCanvas();
+  }
+  ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+  petals.forEach(p => {
+    if (p.alpha < p.maxAlpha) {
+      p.alpha += p.alphaSpeed;
+      if (p.alpha > p.maxAlpha) p.alpha = p.maxAlpha;
+    }
+    p.sway += p.swaySpeed;
+    p.x += p.wind + Math.sin(p.sway) * 0.6;
+    p.y += p.speed;
+    p.rot += p.rotSpeed;
+    if (p.y > canvasHeight - 30) {
+      p.y = -20 - Math.random() * 200;
+      p.x = Math.random() * canvasWidth;
+      p.alpha = 0;
+    }
+    if (p.x < -40) p.x = canvasWidth + 40;
+    if (p.x > canvasWidth + 40) p.x = -40;
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.rotate(p.rot);
+    ctx.globalAlpha = p.alpha;
+    const s = p.size;
+    if (p.type === 0) {
+      const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, s);
+      gradient.addColorStop(0, p.color === 0 ? 'rgba(255,220,230,0.9)' : 'rgba(220,160,180,0.85)');
+      gradient.addColorStop(0.6, p.color === 0 ? 'rgba(255,240,245,0.85)' : 'rgba(196,139,159,0.75)');
+      gradient.addColorStop(1, 'rgba(255,255,255,0.3)');
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.moveTo(0, s * 0.8);
+      ctx.bezierCurveTo(s * 0.3, s * 0.5, s * 0.6, s * 0.1, 0, -s * 0.6);
+      ctx.bezierCurveTo(-s * 0.6, s * 0.1, -s * 0.3, s * 0.5, 0, s * 0.8);
+      ctx.fill();
+    } else {
+      const leafGrad = ctx.createLinearGradient(0, -s * 0.7, 0, s * 0.7);
+      leafGrad.addColorStop(0, 'rgba(120,160,110,0.6)');
+      leafGrad.addColorStop(0.5, 'rgba(100,140,90,0.5)');
+      leafGrad.addColorStop(1, 'rgba(80,120,70,0.4)');
+      ctx.fillStyle = leafGrad;
+      ctx.beginPath();
+      ctx.moveTo(0, -s * 0.7);
+      ctx.bezierCurveTo(s * 0.4, -s * 0.3, s * 0.35, s * 0.4, 0, s * 0.7);
+      ctx.bezierCurveTo(-s * 0.35, s * 0.4, -s * 0.4, -s * 0.3, 0, -s * 0.7);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(70,100,60,0.3)';
+      ctx.lineWidth = s * 0.06;
+      ctx.beginPath();
+      ctx.moveTo(0, -s * 0.5);
+      ctx.lineTo(0, s * 0.5);
+      ctx.stroke();
+    }
+    ctx.restore();
+  });
+  requestAnimationFrame(drawPetals);
+}
+
+function showToast(msg) {
+  $toast.textContent = msg;
+  $toast.classList.add('show');
+  setTimeout(() => $toast.classList.remove('show'), 2000);
+}
+</script>
+</body>
+</html>
