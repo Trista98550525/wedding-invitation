@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:transparent;">
+<audio id="bgm" loop preload="metadata"></audio>
+<script>
+  const STORAGE_KEY = 'weddingAudioState';
+  const audio = document.getElementById('bgm');
+  let pendingPlay = false;
+
+  // 从 localStorage 恢复状态
+  function restoreState() {
+    try {
+      const state = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+      if (state.src) {
+        audio.src = state.src;
+        audio.title = state.title || '';
+        audio.currentTime = state.currentTime || 0;
+        pendingPlay = !state.paused && state.src;
+        audio.load();
+      }
+    } catch (e) {}
+  }
+
+  // 保存状态
+  function saveState() {
+    try {
+      const state = {
+        src: audio.src,
+        title: audio.title,
+        currentTime: audio.currentTime,
+        paused: audio.paused
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (e) {}
+  }
+
+  // 定期保存位置
+  setInterval(() => {
+    if (!audio.paused && audio.src) {
+      saveState();
+    }
+  }, 2000);
+
+  // 事件监听
+  audio.addEventListener('play', saveState);
+  audio.addEventListener('pause', saveState);
+  audio.addEventListener('ended', saveState);
+
+  // 音频准备好后
+  audio.addEventListener('canplay', () => {
+    window.parent.postMessage({ type: 'ready' }, '*');
+    if (pendingPlay && audio.paused) {
+      pendingPlay = false;
+      audio.play().catch(() => {});
+    }
+  });
+
+  // 接收消息
+  window.addEventListener('message', (e) => {
+    if (!e.data || typeof e.data !== 'object') return;
+    switch (e.data.type) {
+      case 'init':
+        audio.title = e.data.title || '';
+        audio.src = e.data.src;
+        audio.load();
+        break;
+      case 'play':
+        pendingPlay = true;
+        if (audio.paused) {
+          audio.play().catch(() => {});
+        }
+        saveState();
+        break;
+      case 'pause':
+        audio.pause();
+        saveState();
+        break;
+    }
+  });
+
+  // 通知父页面状态
+  function notifyState() {
+    window.parent.postMessage({ type: 'stateUpdate', playing: !audio.paused }, '*');
+  }
+
+  audio.addEventListener('playing', notifyState);
+  audio.addEventListener('pause', notifyState);
+
+  // 初始化
+  restoreState();
+</script>
+</body>
+</html>
